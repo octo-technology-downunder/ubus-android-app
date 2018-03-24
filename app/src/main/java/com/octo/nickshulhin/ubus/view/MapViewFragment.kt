@@ -1,6 +1,7 @@
 package com.octo.nickshulhin.ubus.view
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -12,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.Toast
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -39,12 +41,11 @@ import java.util.*
 class MapViewFragment : Fragment() {
 
     var mGoogleMap: GoogleMap? = null
-    var dataModel: DataModel? = null
+    var dataModel: DataModel = DataModel()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val uid = UUID.randomUUID().toString()
         val view = inflater.inflate(R.layout.map_view_fragment_layout, container, false)
         val mapView: MapView = view.findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
@@ -58,23 +59,24 @@ class MapViewFragment : Fragment() {
                 mGoogleMap!!.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
                 mGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
                 setUpSearchLocationFragment()
-                setUpMapClickListener(uid, object : OnDataReceivedListener<DataModel> {
+                setUpMapClickListener(object : OnDataReceivedListener<DataModel> {
                     override fun onDataReceived(data: DataModel) {
-                        dataModel = data
+                        dataModel.endLat = data.endLat
+                        dataModel.endLong = data.endLong
                     }
                 })
-                setUpPushButton(view, uid)
+                setUpPushButton(view)
             }
         })
         return view
     }
 
-    fun setUpMapClickListener(uuid: String, listener: OnDataReceivedListener<DataModel>) {
+    fun setUpMapClickListener(listener: OnDataReceivedListener<DataModel>) {
         mGoogleMap!!.setOnMapClickListener(object : GoogleMap.OnMapClickListener {
             override fun onMapClick(point: LatLng) {
                 mGoogleMap!!.clear()
                 val marker = mGoogleMap!!.addMarker(MarkerOptions().position(point))
-                listener.onDataReceived(DataModel(uuid, marker.position.latitude, marker.position.longitude))
+                listener.onDataReceived(DataModel(endLat = marker.position.latitude, endLong = marker.position.longitude))
             }
         });
     }
@@ -104,16 +106,15 @@ class MapViewFragment : Fragment() {
     fun setUpHookListener(hookId: String) {
         Connectivity.subscribeForHookID(hookId, object : OnDataReceivedListener<String> {
             override fun onDataReceived(data: String) {
-
+                Toast.makeText(context, "Firebase changed: " + data, Toast.LENGTH_SHORT).show();
             }
         })
     }
 
-    fun setUpPushButton(view: View, hookId: String) {
+    fun setUpPushButton(view: View) {
         val pushButton: Button = view.findViewById(R.id.map_button_push_id)
         pushButton.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View?) {
-                setUpHookListener(hookId)
+            override fun onClick(view: View) {
 
                 if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                         && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -122,6 +123,20 @@ class MapViewFragment : Fragment() {
 
                 fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     Log.i("Location", "My location is " + location!!.longitude + "," + location.latitude)
+
+                        dataModel.startLat = location.latitude
+                        dataModel.startLong = location.longitude
+
+                        Connectivity.pushLocation(dataModel, object : OnDataReceivedListener<String> {
+                            override fun onDataReceived(data: String) {
+                                (view.context as Activity).runOnUiThread(object : Runnable {
+                                    override fun run() {
+                                        Toast.makeText(view.context, "Received data: " + data, Toast.LENGTH_SHORT).show()
+                                        //setUpHookListener(data)
+                                    }
+                                })
+                            }
+                        })
                 }
 
             }
