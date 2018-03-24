@@ -1,33 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:weightSum="1">
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
 
-        <FrameLayout
-            android:id="@+id/search_address"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fitsSystemWindows="true" />
-
-        <Button
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:id="@+id/map_button_push_id"
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="CONFIRM UBUS" />
+            android:layout_height="wrap_content">
 
-        <com.google.android.gms.maps.MapView
-            android:id="@+id/mapView"
+            <FrameLayout
+                android:id="@+id/search_address"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fitsSystemWindows="true" />
+
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
+            android:layout_marginTop="5dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="0.7" />
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/map_button_push_id"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark"
+                android:text="CONFIRM UBUS" />
+        </android.support.v7.widget.CardView>
     </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>

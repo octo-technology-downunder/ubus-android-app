@@ -26,6 +26,8 @@ import com.google.android.gms.location.places.Place
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment
+import com.google.android.gms.maps.model.CameraPosition
+import com.octo.nickshulhin.ubus.model.DataModel
 
 
 /**
@@ -35,6 +37,8 @@ import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragmen
 class MapViewFragment : Fragment() {
 
     var mGoogleMap: GoogleMap? = null
+    var dataModel: DataModel? = null
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val uid = UUID.randomUUID().toString()
@@ -49,13 +53,27 @@ class MapViewFragment : Fragment() {
                 val sydney = LatLng(-34.0, 151.0)
                 mGoogleMap!!.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
                 mGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-                setUpPushButton(view, uid)
                 setUpSearchLocationFragment()
+                setUpMapClickListener(uid, object: OnDataReceivedListener<DataModel> {
+                    override fun onDataReceived(data: DataModel) {
+                        dataModel = data
+                    }
+                })
+                setUpPushButton(view, uid)
             }
         })
         return view
     }
 
+    fun setUpMapClickListener(uuid: String, listener: OnDataReceivedListener<DataModel>) {
+        mGoogleMap!!.setOnMapClickListener(object : GoogleMap.OnMapClickListener {
+            override fun onMapClick(point: LatLng) {
+                mGoogleMap!!.clear()
+                val marker = mGoogleMap!!.addMarker(MarkerOptions().position(point))
+                listener.onDataReceived(DataModel(uuid, marker.position.latitude, marker.position.longitude))
+            }
+        });
+    }
 
     fun setUpSearchLocationFragment() {
 
@@ -63,12 +81,11 @@ class MapViewFragment : Fragment() {
 
         fragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
-                // TODO: Get info about the selected place.
-                Log.i("SEARCH", "Place: " + place.name)
+                val cameraPosition: CameraPosition = CameraPosition.Builder().target(place.latLng).zoom(15f).build()
+                mGoogleMap!!.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
             }
 
             override fun onError(status: Status) {
-                // TODO: Handle the error.
                 Log.i("SEARCH", "An error occurred: " + status)
             }
         })
@@ -81,7 +98,7 @@ class MapViewFragment : Fragment() {
     }
 
     fun setUpHookListener(hookId: String) {
-        Connectivity.subscribeForHookID(hookId, object : OnDataReceivedListener {
+        Connectivity.subscribeForHookID(hookId, object : OnDataReceivedListener<String> {
             override fun onDataReceived(data: String) {
 
             }
@@ -92,7 +109,6 @@ class MapViewFragment : Fragment() {
         val pushButton: Button = view.findViewById(R.id.map_button_push_id)
         pushButton.setOnClickListener(object : View.OnClickListener {
             override fun onClick(p0: View?) {
-                Connectivity.pushHookID(hookId)
                 setUpHookListener(hookId)
             }
         })
