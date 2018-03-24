@@ -5,25 +5,27 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import com.google.android.gms.common.api.Status
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.octo.nickshulhin.ubus.R
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.common.api.GoogleApiClient
-import android.support.v4.content.ContextCompat
-import android.os.Build
-import android.support.annotation.RequiresApi
-import android.widget.Button
+import com.google.android.gms.maps.model.MarkerOptions
+import com.octo.nickshulhin.ubus.R
 import com.octo.nickshulhin.ubus.database.Connectivity
 import com.octo.nickshulhin.ubus.listeners.OnDataReceivedListener
-import kotlinx.android.synthetic.main.map_view_fragment_layout.*
 import java.util.*
+import com.google.android.gms.location.places.Place
+import com.google.android.gms.location.places.ui.PlaceSelectionListener
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
+import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment
 
 
 /**
@@ -47,14 +49,39 @@ class MapViewFragment : Fragment() {
                 val sydney = LatLng(-34.0, 151.0)
                 mGoogleMap!!.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
                 mGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+                setUpPushButton(view, uid)
+                setUpSearchLocationFragment()
             }
         })
-        setUpPushButton(view, uid)
         return view
     }
 
-    fun setUpHookListener(hookId: String){
-        Connectivity.subscribeForHookID(hookId, object:OnDataReceivedListener{
+
+    fun setUpSearchLocationFragment() {
+
+        val fragment = SupportPlaceAutocompleteFragment()
+
+        fragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
+            override fun onPlaceSelected(place: Place) {
+                // TODO: Get info about the selected place.
+                Log.i("SEARCH", "Place: " + place.name)
+            }
+
+            override fun onError(status: Status) {
+                // TODO: Handle the error.
+                Log.i("SEARCH", "An error occurred: " + status)
+            }
+        })
+
+        val transaction = childFragmentManager
+                .beginTransaction()
+                .replace(R.id.search_address, fragment)
+        transaction.commit()
+
+    }
+
+    fun setUpHookListener(hookId: String) {
+        Connectivity.subscribeForHookID(hookId, object : OnDataReceivedListener {
             override fun onDataReceived(data: String) {
 
             }

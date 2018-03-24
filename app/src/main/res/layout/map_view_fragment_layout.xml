@@ -10,12 +10,11 @@
         android:orientation="vertical"
         android:weightSum="1">
 
-        <fragment
+        <FrameLayout
             android:id="@+id/search_address"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
-            />
+            android:fitsSystemWindows="true" />
 
         <Button
             style="@style/Widget.AppCompat.Button.Colored"
