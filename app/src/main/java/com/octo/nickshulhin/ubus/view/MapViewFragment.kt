@@ -2,6 +2,7 @@ package com.octo.nickshulhin.ubus.view
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
@@ -12,22 +13,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import com.google.android.gms.common.api.Status
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.places.Place
+import com.google.android.gms.location.places.ui.PlaceSelectionListener
+import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.octo.nickshulhin.ubus.R
 import com.octo.nickshulhin.ubus.database.Connectivity
 import com.octo.nickshulhin.ubus.listeners.OnDataReceivedListener
-import java.util.*
-import com.google.android.gms.location.places.Place
-import com.google.android.gms.location.places.ui.PlaceSelectionListener
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
-import com.google.android.gms.location.places.ui.SupportPlaceAutocompleteFragment
-import com.google.android.gms.maps.model.CameraPosition
 import com.octo.nickshulhin.ubus.model.DataModel
+import java.util.*
 
 
 /**
@@ -38,6 +40,7 @@ class MapViewFragment : Fragment() {
 
     var mGoogleMap: GoogleMap? = null
     var dataModel: DataModel? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -50,11 +53,12 @@ class MapViewFragment : Fragment() {
         mapView.getMapAsync(object : OnMapReadyCallback {
             override fun onMapReady(googleMap: GoogleMap) {
                 mGoogleMap = googleMap
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(context.applicationContext)
                 val sydney = LatLng(-34.0, 151.0)
                 mGoogleMap!!.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
                 mGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
                 setUpSearchLocationFragment()
-                setUpMapClickListener(uid, object: OnDataReceivedListener<DataModel> {
+                setUpMapClickListener(uid, object : OnDataReceivedListener<DataModel> {
                     override fun onDataReceived(data: DataModel) {
                         dataModel = data
                     }
@@ -108,8 +112,18 @@ class MapViewFragment : Fragment() {
     fun setUpPushButton(view: View, hookId: String) {
         val pushButton: Button = view.findViewById(R.id.map_button_push_id)
         pushButton.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(p0: View?) {
+            override fun onClick(view: View?) {
                 setUpHookListener(hookId)
+
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return
+                }
+
+                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                    Log.i("Location", "My location is " + location!!.longitude + "," + location.latitude)
+                }
+
             }
         })
     }

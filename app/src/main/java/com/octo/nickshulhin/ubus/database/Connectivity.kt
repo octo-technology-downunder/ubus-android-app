@@ -22,7 +22,9 @@ object Connectivity {
         val myRef = database.getReference("hooks").child(id)
         myRef.addValueEventListener(object:ValueEventListener{
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                listener.onDataReceived(dataSnapshot.getValue(String::class.java)!!)
+                if(dataSnapshot.exists()) {
+                    listener.onDataReceived(dataSnapshot.getValue(String::class.java)!!)
+                }
             }
 
             override fun onCancelled(p0: DatabaseError?) {}
