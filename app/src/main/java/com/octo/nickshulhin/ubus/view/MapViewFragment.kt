@@ -19,7 +19,11 @@ import com.google.android.gms.common.api.GoogleApiClient
 import android.support.v4.content.ContextCompat
 import android.os.Build
 import android.support.annotation.RequiresApi
+import android.widget.Button
+import com.octo.nickshulhin.ubus.database.Connectivity
+import com.octo.nickshulhin.ubus.listeners.OnDataReceivedListener
 import kotlinx.android.synthetic.main.map_view_fragment_layout.*
+import java.util.*
 
 
 /**
@@ -31,6 +35,7 @@ class MapViewFragment : Fragment() {
     var mGoogleMap: GoogleMap? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val uid = UUID.randomUUID().toString()
         val view = inflater.inflate(R.layout.map_view_fragment_layout, container, false)
         val mapView: MapView = view.findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
@@ -44,10 +49,29 @@ class MapViewFragment : Fragment() {
                 mGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
             }
         })
+        setUpPushButton(view, uid)
         return view
     }
 
-    fun prepareMaps(mapView: MapView){
+    fun setUpHookListener(hookId: String){
+        Connectivity.subscribeForHookID(hookId, object:OnDataReceivedListener{
+            override fun onDataReceived(data: String) {
+
+            }
+        })
+    }
+
+    fun setUpPushButton(view: View, hookId: String) {
+        val pushButton: Button = view.findViewById(R.id.map_button_push_id)
+        pushButton.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(p0: View?) {
+                Connectivity.pushHookID(hookId)
+                setUpHookListener(hookId)
+            }
+        })
+    }
+
+    fun prepareMaps(mapView: MapView) {
         mapView.getMapAsync({ mMap ->
             mGoogleMap = mMap
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -63,7 +87,7 @@ class MapViewFragment : Fragment() {
         setUpLocation()
     }
 
-    fun setUpLocation(){
+    fun setUpLocation() {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
