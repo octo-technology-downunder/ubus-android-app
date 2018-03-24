@@ -34,6 +34,7 @@ class MapViewFragment : Fragment() {
         val view = inflater.inflate(R.layout.map_view_fragment_layout, container, false)
         val mapView: MapView = view.findViewById(R.id.mapView)
         mapView.onCreate(savedInstanceState)
+        mapView.onResume()
         prepareMaps(mapView)
         mapView.getMapAsync(object : OnMapReadyCallback {
             override fun onMapReady(googleMap: GoogleMap) {
@@ -47,7 +48,7 @@ class MapViewFragment : Fragment() {
     }
 
     fun prepareMaps(mapView: MapView){
-        mapView.getMapAsync(OnMapReadyCallback { mMap ->
+        mapView.getMapAsync({ mMap ->
             mGoogleMap = mMap
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 setUpLocation()
