@@ -31,7 +31,7 @@ import com.octo.nickshulhin.ubus.R
 import com.octo.nickshulhin.ubus.database.Connectivity
 import com.octo.nickshulhin.ubus.listeners.OnDataReceivedListener
 import com.octo.nickshulhin.ubus.model.DataModel
-import java.util.*
+import com.octo.nickshulhin.ubus.utils.PopupBuilder
 
 
 /**
@@ -106,7 +106,7 @@ class MapViewFragment : Fragment() {
     fun setUpHookListener(hookId: String) {
         Connectivity.subscribeForHookID(hookId, object : OnDataReceivedListener<String> {
             override fun onDataReceived(data: String) {
-                Toast.makeText(context, "Firebase changed: " + data, Toast.LENGTH_SHORT).show();
+                PopupBuilder.showSingleButton(context, "Your bus will arrive in " + data + " minutes.")
             }
         })
     }
@@ -124,21 +124,20 @@ class MapViewFragment : Fragment() {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     Log.i("Location", "My location is " + location!!.longitude + "," + location.latitude)
 
-                        dataModel.startLat = location.latitude
-                        dataModel.startLong = location.longitude
+                    dataModel.startLat = location.latitude
+                    dataModel.startLong = location.longitude
 
-                        Connectivity.pushLocation(dataModel, object : OnDataReceivedListener<String> {
-                            override fun onDataReceived(data: String) {
-                                (view.context as Activity).runOnUiThread(object : Runnable {
-                                    override fun run() {
-                                        Toast.makeText(view.context, "Received data: " + data, Toast.LENGTH_SHORT).show()
-                                        //setUpHookListener(data)
-                                    }
-                                })
-                            }
-                        })
+                    Connectivity.pushLocation(dataModel, object : OnDataReceivedListener<String> {
+                        override fun onDataReceived(data: String) {
+                            (view.context as Activity).runOnUiThread(object : Runnable {
+                                override fun run() {
+                                    Toast.makeText(view.context, "Confirming your route...", Toast.LENGTH_SHORT).show()
+                                    setUpHookListener(data)
+                                }
+                            })
+                        }
+                    })
                 }
-
             }
         })
     }
@@ -168,7 +167,7 @@ class MapViewFragment : Fragment() {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return;
+            return
         }
         mGoogleMap!!.setMyLocationEnabled(true)
         mGoogleMap!!.getUiSettings().setMyLocationButtonEnabled(true)

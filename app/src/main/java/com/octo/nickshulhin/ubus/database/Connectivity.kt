@@ -25,7 +25,7 @@ object Connectivity {
                 "{\"start_lat\":\" " + dataModel.startLat + "\", \"start_long\": \"" + dataModel.startLong + "\", \"end_lat\": \"" + dataModel.endLat + "\", \"end_long\": \"" + dataModel.endLong + "\"}")
         val request = Request.Builder()
                 .post(body)
-                .url("http://postb.in/PoPXjGfz")
+                .url("https://ubus-client-api.herokuapp.com/trip")
                 .build()
         val call = client.newCall(request)
         call.enqueue(object : Callback {
